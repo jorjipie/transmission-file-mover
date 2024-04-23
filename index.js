@@ -13,10 +13,33 @@ const getTransmissionSessionID = transmissionServerURL => {
         getTorrents(error.response.headers['x-transmission-session-id']);
     });
 }
-const consoleLogList = (list) => {
-    let headerRow = list[0];
-    for (let i = 1; i < headerRow.length; i++) {
-        console.log(headerRow[i] + "\t" + list[1][i])
+const consoleLogList = (list, all) => {
+    let fields = list[0];
+    for (let torrentIndex = 1; torrentIndex < list.length; torrentIndex++) {
+        for (let fieldIndex = 0; fieldIndex < fields.length; fieldIndex++) {
+            if (all) {
+                if(fields[fieldIndex] == 'trackers') {
+                    console.log(fields[fieldIndex] + "\t" + JSON.stringify(list[torrentIndex][fieldIndex]));
+                }
+                else {
+                    console.log(fields[fieldIndex] + "\t" + list[torrentIndex][fieldIndex])
+                }
+            }
+            else {
+                switch(fields[fieldIndex]) {
+                    case "id":
+                        console.log("ID:\t:" + list[torrentIndex][fieldIndex]);
+                        break;
+                    case "downloadDir":
+                        console.log("Download Dir:\t:" + list[torrentIndex][fieldIndex]);
+                        break;
+                    case "trackers":
+                        console.log("Trackers:\t" + JSON.stringify(list[torrentIndex][fieldIndex]));
+                        break;
+                };  
+            }
+        }
+        console.log("");
     }
 };
 const getTorrents = function (sessionID) {
@@ -25,8 +48,8 @@ const getTorrents = function (sessionID) {
     axios.post(config.transmission_server.url + 'rpc', requestData, headers)
     .catch(error => { console.log(error); })
     .then(res => { 
-        console.log(res.data.arguments.torrents[0]); 
-        consoleLogList(res.data.arguments.torrents);
+        //console.log(res.data.arguments.torrents[0]); 
+        consoleLogList(res.data.arguments.torrents, true);
     });
 }
 
