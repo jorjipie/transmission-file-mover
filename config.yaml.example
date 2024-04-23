@@ -1,0 +1,2 @@
+transmission_server:
+  url: http://mytransmissionserver.local:80/transmission/

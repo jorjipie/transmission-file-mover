@@ -1,0 +1,24 @@
+{
+  "name": "transmission-file-mover",
+  "version": "1.0.0",
+  "description": "Moves transmission downloads if seeding to private tracker. Deletes if completed downloading to public trackers.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jorjipie/transmission-file-mover.git"
+  },
+  "author": "jorjipie",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/jorjipie/transmission-file-mover/issues"
+  },
+  "homepage": "https://github.com/jorjipie/transmission-file-mover#readme",
+  "dependencies": {
+    "axios": "^1.6.8",
+    "js-yaml": "^4.1.0"
+  }
+}
