@@ -28,9 +28,12 @@ const cleanUpList = table => {
     return list;
 }
 
-// returns the matching tracker if there is any.
+/*  returns the matching tracker if there is any.
+    FWIW, I don't love nesting an if inside two for loops, but I really wanted
+    that early exit. 
+*/
 const matchTrackers = (torrentTrackers, configTrackers) => {
-for (let ttIndex = 0; ttIndex < torrentTrackers.length; ttIndex++) {
+    for (let ttIndex = 0; ttIndex < torrentTrackers.length; ttIndex++) {
         for (let ctIndex = 0; ctIndex < configTrackers.length; ctIndex++) {
             if (torrentTrackers[ttIndex].announce
                 .indexOf(configTrackers[ctIndex].server) != -1) {
@@ -64,24 +67,29 @@ const moveTorrent = (torrent, destFolder) => {
     If there's a tracker match, checks the destination folder to make sure that
         it's in the right place. If it's not, it moves it.
 */
+const processPrivateTorrent = (torrent, configTrackers) => {
+    let trackerMatch = matchTrackers(torrent.trackers, configTrackers);
+    if (trackerMatch != null 
+        && torrent.downloadDir === trackerMatch['dest_folder']) {
+        console.log("\tTorrent is already in correct destination.")
+    
+    } else if (torrent.downloadDir != trackerMatch['dest_folder']) { 
+        moveTorrent(torrent, trackerMatch['dest_folder']);
+
+    } else {
+        console.log("No tracker match! Add this tracker to your config!")
+        console.log(torrent.trackers);
+    }
+};
+
 const checkAndMoveTorrent = (torrent, configTrackers) => {
     if (torrent.isPrivate) {
         console.log (`${torrent.name} is private.`);
-        let trackerMatch = matchTrackers(torrent.trackers, configTrackers);
-
-        if (trackerMatch != null 
-            && torrent.downloadDir === trackerMatch['dest_folder']) {
-            console.log("\tTorrent is already in correct destination.")
-        
-        } else if (torrent.downloadDir != trackerMatch['dest_folder']) { 
-            moveTorrent(torrent, trackerMatch['dest_folder']);
-
-        } else {
-            console.log("No tracker match! Add this tracker to your config!")
-            console.log(torrent.trackers);
-        }
-        
-    } else { console.log (`${torrent.name} is not private.`); }
+        processPrivateTorrent(torrent, configTrackers);
+    } else { 
+        console.log (`${torrent.name} is not private.`); 
+        throw new error("Not implemented yet!")
+}
 };
 
 // Iterates through all torrents.
@@ -100,7 +108,7 @@ const getTorrents = function (sessionID) {
         "peersSendingToUs","percentDone","queuePosition","rateDownload",
         "rateUpload","recheckProgress","seedRatioMode","seedRatioLimit",
         "sizeWhenDone","status","trackers","downloadDir","uploadedEver",
-        "uploadRatio","webseedsSendingToUs"],"format":"table",},
+        "uploadRatio","webseedsSendingToUs"],"format":"table"},
         "method":"torrent-get"};
     headers.headers["X-Transmission-Session-Id"] = sessionID;
     axios.post(config.transmission_server.url + 'rpc', requestData, headers)
