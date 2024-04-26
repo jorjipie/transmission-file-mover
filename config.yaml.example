@@ -1,9 +1,12 @@
 transmission_server:
   url: http://mytransmissionserver.local:80/transmission/
-  
+
 # Trackers for torrents that you want to keep seeding
 private_trackers:
   - server: https://tracker.torrentleech.org
     sitename: torrentleech
     origin_folder: /data/completed/TV
     dest_folder: /data/completed/TV/Seed
+
+#info, warn, error
+log_level: error
