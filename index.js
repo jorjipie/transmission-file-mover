@@ -2,8 +2,8 @@ import axios from "axios";
 import yaml from "js-yaml";
 import fs from "fs";
 
-
-const config = yaml.load(fs.readFileSync("config.yaml", "utf8"));
+const fileURL = new URL('./config.yaml', import.meta.url)
+const config = yaml.load(fs.readFileSync(fileURL, "utf8"));
 let headers = { headers: { 'X-Transmission-Session-Id': null }};
 
 // polls Transmission instance for session ID. 
@@ -37,8 +37,8 @@ const matchTrackers = (torrentTrackers, configTrackers) => {
         for (let ctIndex = 0; ctIndex < configTrackers.length; ctIndex++) {
             if (torrentTrackers[ttIndex].announce
                 .indexOf(configTrackers[ctIndex].server) != -1) {
-                    return configTrackers[ctIndex];
-                }
+                return configTrackers[ctIndex];
+            }
         }
     }
     return null;
@@ -56,9 +56,21 @@ const moveTorrent = (torrent, destFolder) => {
     };
     axios.post(config.transmission_server.url + 'rpc', requestData, headers)
     .then(res => {
-        console.log(`${torrent.name} moved from ${torrent.downloadDir} to `
-        + `${destFolder}.`)
+        consoleLog(`${torrent.name} moved from ${torrent.downloadDir} to `
+        + `${destFolder}.`, "warn");
     });
+}
+
+const consoleLog = (message, logLevel) => {
+    if (logLevel === "error") {
+        console.log(message);
+    } else if (logLevel === "warn"
+        && (config["log_level"] === "warn" || config["log_level"] === "info")) {
+        console.log(message);
+    } else if (logLevel === "info" && config["log_level"] === "info") {
+        console.log(message);
+    }
+    return;
 }
 
 /*  For a single torrent. 
@@ -71,23 +83,22 @@ const processPrivateTorrent = (torrent, configTrackers) => {
     let trackerMatch = matchTrackers(torrent.trackers, configTrackers);
     if (trackerMatch != null 
         && torrent.downloadDir === trackerMatch['dest_folder']) {
-        console.log("\tTorrent is already in correct destination.")
+        consoleLog("\tTorrent is already in correct destination.", "info");
     
     } else if (torrent.downloadDir != trackerMatch['dest_folder']) { 
         moveTorrent(torrent, trackerMatch['dest_folder']);
 
     } else {
-        console.log("No tracker match! Add this tracker to your config!")
-        console.log(torrent.trackers);
+        consoleLog("No tracker match! Add this tracker to your config!\n" + torrent.trackers, "warn");
     }
 };
 
 const checkAndMoveTorrent = (torrent, configTrackers) => {
     if (torrent.isPrivate) {
-        console.log (`${torrent.name} is private.`);
+        consoleLog (`${torrent.name} is private.`, "info");
         processPrivateTorrent(torrent, configTrackers);
     } else { 
-        console.log (`${torrent.name} is not private.`); 
+        consoleLog (`${torrent.name} is not private.`, "error"); 
         throw new error("Not implemented yet!")
 }
 };
@@ -112,7 +123,7 @@ const getTorrents = function (sessionID) {
         "method":"torrent-get"};
     headers.headers["X-Transmission-Session-Id"] = sessionID;
     axios.post(config.transmission_server.url + 'rpc', requestData, headers)
-    .catch(error => { console.log(error); })
+    .catch(error => { consoleLog(error, "error"); })
     .then(res => { 
         //consoleLogList(res.data.arguments.torrents, true);
         let list = cleanUpList(res.data.arguments.torrents);
