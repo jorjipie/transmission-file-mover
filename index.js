@@ -1,10 +1,9 @@
 import axios from "axios";
 import yaml from "js-yaml";
 import fs from "fs";
-import path from "path";
 
-const configFilePath = path.join(path.resolve(), 'config.yaml');
-const config = yaml.load(fs.readFileSync(configFilePath, "utf8"));
+const fileURL = new URL('./config.yaml', import.meta.url)
+const config = yaml.load(fs.readFileSync(fileURL, "utf8"));
 let headers = { headers: { 'X-Transmission-Session-Id': null }};
 
 // polls Transmission instance for session ID. 
