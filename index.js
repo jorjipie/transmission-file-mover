@@ -92,15 +92,29 @@ const processPrivateTorrent = (torrent, configTrackers) => {
         consoleLog("No tracker match! Add this tracker to your config!\n" + torrent.trackers, "warn");
     }
 };
+const deleteTorrent = torrent => {
+    let requestData = {
+        "arguments": {
+            "delete-local-data": false,
+            "ids": [torrent.id]
+        },
+        "method": "torrent-remove"
+    };
+    axios.post(config.transmission_server.url + 'rpc', requestData, headers).then(res => {
+        console.log(`Deleted ${torrent.name}.`);
+    });
+}
 
 const checkAndMoveTorrent = (torrent, configTrackers) => {
     if (torrent.isPrivate) {
         consoleLog (`${torrent.name} is private.`, "info");
         processPrivateTorrent(torrent, configTrackers);
     } else { 
-        consoleLog (`${torrent.name} is not private.`, "error"); 
-        throw new error("Not implemented yet!")
-}
+        consoleLog (`${torrent.name} is not private.`, "warn"); 
+        if (torrent.status === 6) { 
+            deleteTorrent(torrent);
+        }
+    }
 };
 
 // Iterates through all torrents.
@@ -113,7 +127,7 @@ const processTorrents = (torrents, configTrackers) => {
 
 // Polls transmission for all torrents. Processes them.
 const getTorrents = function (sessionID) {
-    let requestData = {"arguments":{"fields":["name", "isPrivate","id","error",
+    let requestData = {"arguments":{"fields":["name", "status", "isPrivate","id","error",
         "errorString","eta","isFinished","isStalled","labels","leftUntilDone",
         "metadataPercentComplete","peersConnected","peersGettingFromUs",
         "peersSendingToUs","percentDone","queuePosition","rateDownload",
